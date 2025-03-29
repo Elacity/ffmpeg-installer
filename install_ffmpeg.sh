@@ -44,12 +44,17 @@ MAKE="make"
 export PKG_PATH="/usr/lib/pkgconfig"
 
 libs_only=0
+need_sudo=0
 
 # handle dynamic arguments
-VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix: -- "$@")
+VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix,sudo: -- "$@")
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
+    --sudo)
+      need_sudo=1
+      shift 1
+      ;;
     --maximum-memory)
       MAXIMUM_MEMORY=$2
       shift 2
@@ -221,8 +226,12 @@ cd ffmpeg-${FFMPEG_VERSION}
 ${CONFIGURE} "${CONFIG_ARGS[@]}"
 ${MAKE} -j$(nproc)
 if [ $libs_only -eq 0 ]; then
-  # there should binary available that we store as sudo
-  sudo -S ${MAKE} install
+  if [ $need_sudo -eq 1 ]; then
+    # there should binary available that we store as sudo
+    sudo -S ${MAKE} install
+  else
+    ${MAKE} install
+  fi
 else
   ${MAKE} install
 fi

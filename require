@@ -44,18 +44,23 @@ enable_libxml2=0    # XML parser (require by dash decoder)
 enable_openssl=0    # SSL/TLS
 ffmpeg_libs_only=0  # only build ffmpeg libraries (no binary)
 ffmpeg_bindir=""    # ffmpeg binary install dir
+use_sudo=0          # use sudo to install ffmpeg
 
 skip_deps_install=0 # skip dependencies installation, go straight to ffmpeg
 
 # Use getopt in a way that is compatible with both macOS and Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install -- "$@")
+  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install,sudo -- "$@")
 else
-  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install -- "$@")
+  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install,sudo -- "$@")
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
+    --sudo)
+      use_sudo=1
+      shift 1
+      ;;
     --platform)
       echo "target platform: $2"
       TARGET_BUILD=$2
@@ -202,6 +207,12 @@ fi
 
 if [ -n "$MAXIMUM_MEMORY" ]; then
   FFMPEG_OPTS+=("--maximum-memory=$MAXIMUM_MEMORY")
+fi
+
+if [ $use_sudo -eq 1 ]; then
+  FFMPEG_OPTS+=(
+    --sudo
+  )
 fi
 
 $scriptdir/install_ffmpeg.sh $TARGET_BUILD $INSTALL_DIR/ffmpeg 6.1 "${FFMPEG_OPTS[@]}"
