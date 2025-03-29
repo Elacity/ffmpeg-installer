@@ -1,0 +1,213 @@
+#!/bin/bash
+
+##########################################################################################
+#                                     GENERAL NOTES
+# ----------------------------------------------------------------------------------------
+# This install process is about to install all the dependencies for Elacity Media Player
+# Here is how dependencies are organized:
+# F: need by ffmpeg
+# P: need by player
+#
+# - libopus: opus 1.4 (F, P)
+# - libssl: openssl 3.0.9 (F, P)
+# - libxml2: libxml2 2.10.1 (F, P)
+# - libx264: x264 0.161.3049 (F)
+# - libdav1d: dav1d 1.3.0 (F)
+# - ffmpeg: ffmpeg 6.0 (P)
+#
+# PS. each of the dependencies have their own build system in place, 
+#     that can be `make`, `cmake` or `meson`
+#
+# build and compilation requirements:
+# - emsdk 3.1.46
+# - ninja 1.10.0
+# - meson 0.50.0, attention older version could make process fail
+#
+##########################################################################################
+
+set -e
+
+scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+root=$(dirname "$scriptdir")
+
+TARGET_BUILD="$(uname -m)"
+
+# initialize ffmpeg options
+FFMPEG_OPTS=()
+
+# library options
+enable_libopus=0    # Opus codec
+enable_libdav1d=0   # AV1 codec https://code.videolan.org/videolan/dav1d
+enable_libaom=0     # AV1 codec https://aomedia.googlesource.com/aom/
+enable_libx264=0    # H.264 codec https://code.videolan.org/videolan/x264
+enable_libxml2=0    # XML parser (require by dash decoder)
+enable_openssl=0    # SSL/TLS
+ffmpeg_libs_only=0  # only build ffmpeg libraries (no binary)
+ffmpeg_bindir=""    # ffmpeg binary install dir
+
+skip_deps_install=0 # skip dependencies installation, go straight to ffmpeg
+
+# Use getopt in a way that is compatible with both macOS and Linux
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install -- "$@")
+else
+  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install -- "$@")
+fi
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+  case "$1" in
+    --platform)
+      echo "target platform: $2"
+      TARGET_BUILD=$2
+      shift 2
+      ;;
+    --installdir)
+      echo "install dir: $2"
+      INSTALL_DIR=$2
+      mkdir -p $INSTALL_DIR
+      shift 2
+      ;;
+    --maximum-memory)
+      echo "maximum memory: $2"
+      MAXIMUM_MEMORY=$2
+      shift 2
+      ;;
+    --ff-bindir)
+      echo "ffmpeg binary install dir: $2"
+      FFMPEG_OPTS+=(
+        --bindir=$2
+      )
+      shift 2
+      ;;
+    --enable-libopus)
+      enable_libopus=1
+      shift 1
+      ;;
+    --enable-libdav1d)
+      enable_libdav1d=1
+      shift 1
+      ;;
+    --enable-libaom)
+      enable_libaom=1
+      shift 1
+      ;;
+    --enable-libx264)
+      enable_libx264=1
+      shift 1
+      ;;
+    --enable-libxml2)
+      enable_libxml2=1
+      shift 1
+      ;;
+    --enable-openssl)
+      enable_openssl=1
+      shift 1
+      ;;
+    --ff-libs-only)
+      ffmpeg_libs_only=1
+      shift 1
+      ;;
+    --skip-deps-install)
+      skip_deps_install=1
+      shift 1
+      ;;
+    -h | --help)
+      echo "usage: $0 [--platform <target-platform>] [--installdir <install-dir>]"
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+if [ -z "$INSTALL_DIR" ]; then
+  echo "error: install dir is not set"
+  echo "       use --installdir <install-path>"
+  exit 1
+fi
+
+if [ $enable_libopus -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_libopus.sh $TARGET_BUILD $INSTALL_DIR/opus "1.4"
+  fi
+  
+  FFMPEG_OPTS+=(
+    --enable-libopus
+    --libopus-prefix=$INSTALL_DIR/opus
+  )
+fi
+
+if [ $enable_libdav1d -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_libdav1d.sh $TARGET_BUILD $INSTALL_DIR/dav1d "1.3.0"
+  fi
+
+  FFMPEG_OPTS+=(
+    --enable-libdav1d
+    --libdav1d-prefix=$INSTALL_DIR/dav1d
+  )
+fi
+
+if [ $enable_libaom -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_libaom.sh $TARGET_BUILD $INSTALL_DIR/aom "3.7.1"
+  fi
+
+  FFMPEG_OPTS+=(
+    --enable-libaom
+    --libaom-prefix=$INSTALL_DIR/aom
+  )
+fi
+
+if [ $enable_libx264 -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_libx264.sh $TARGET_BUILD $INSTALL_DIR/x264
+  fi
+
+  FFMPEG_OPTS+=(
+    --enable-libx264
+    --libx264-prefix=$INSTALL_DIR/x264
+  )
+fi
+
+if [ $enable_libxml2 -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_libxml2.sh $TARGET_BUILD $INSTALL_DIR/libxml2 "2.10.1"
+  fi
+
+  FFMPEG_OPTS+=(
+    --enable-libxml2
+    --libxml2-prefix=$INSTALL_DIR/libxml2
+  )
+fi
+
+if [ $enable_openssl -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_openssl.sh $TARGET_BUILD $INSTALL_DIR/openssl "3.0.12"
+  fi
+  
+  FFMPEG_OPTS+=(
+    --enable-openssl
+    --openssl-prefix=$INSTALL_DIR/openssl
+  )
+fi
+
+if [ $ffmpeg_libs_only -eq 1 ]; then
+  FFMPEG_OPTS+=(
+    --libs-only
+  )
+fi
+
+if [ -n "$MAXIMUM_MEMORY" ]; then
+  FFMPEG_OPTS+=("--maximum-memory=$MAXIMUM_MEMORY")
+fi
+
+$scriptdir/install_ffmpeg.sh $TARGET_BUILD $INSTALL_DIR/ffmpeg 6.1 "${FFMPEG_OPTS[@]}"
+
+if [ $ffmpeg_libs_only -eq 0 ]; then
+  rm -f $INSTALL_DIR/.bashrc
+  echo "export PATH=$INSTALL_DIR/ffmpeg/bin:\$PATH" >> $INSTALL_DIR/.bashrc
+  source $INSTALL_DIR/.bashrc
+fi
