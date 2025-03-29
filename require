@@ -34,6 +34,7 @@ TARGET_BUILD="$(uname -m)"
 
 # initialize ffmpeg options
 FFMPEG_OPTS=()
+FFMPEG_VERSION="6.1"
 
 # library options
 enable_libopus=0    # Opus codec
@@ -50,9 +51,9 @@ skip_deps_install=0 # skip dependencies installation, go straight to ffmpeg
 
 # Use getopt in a way that is compatible with both macOS and Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install,sudo -- "$@")
+  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
 else
-  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,skip-deps-install,sudo -- "$@")
+  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
@@ -111,6 +112,10 @@ while [ : ]; do
     --ff-libs-only)
       ffmpeg_libs_only=1
       shift 1
+      ;;
+    --ff-version)
+      FFMPEG_VERSION=$2
+      shift 2
       ;;
     --skip-deps-install)
       skip_deps_install=1
@@ -215,7 +220,7 @@ if [ $use_sudo -eq 1 ]; then
   )
 fi
 
-$scriptdir/install_ffmpeg.sh $TARGET_BUILD $INSTALL_DIR/ffmpeg 6.1 "${FFMPEG_OPTS[@]}"
+$scriptdir/install_ffmpeg.sh $TARGET_BUILD $INSTALL_DIR/ffmpeg $FFMPEG_VERSION "${FFMPEG_OPTS[@]}"
 
 if [ $ffmpeg_libs_only -eq 0 ]; then
   rm -f $INSTALL_DIR/.bashrc
