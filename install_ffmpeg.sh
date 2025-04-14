@@ -47,7 +47,7 @@ libs_only=0
 need_sudo=0
 
 # handle dynamic arguments
-VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix,sudo: -- "$@")
+VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix:,sudo: -- "$@")
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
