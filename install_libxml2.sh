@@ -19,7 +19,7 @@ fi
 
 echo "installing libxml2..."
 mkdir -p $LIBXML2_PREFIX/source && cd $LIBXML2_PREFIX/source
-wget -nc "https://gitlab.gnome.org/GNOME/libxml2/-/archive/v${LIBXML2_VERSION}/libxml2-v${LIBXML2_VERSION}.tar.gz" -O libxml2-v${LIBXML2_VERSION}.tar.gz
+wget --continue "https://gitlab.gnome.org/GNOME/libxml2/-/archive/v${LIBXML2_VERSION}/libxml2-v${LIBXML2_VERSION}.tar.gz" -O libxml2-v${LIBXML2_VERSION}.tar.gz
 tar -xf libxml2-v${LIBXML2_VERSION}.tar.gz
 cd libxml2-v${LIBXML2_VERSION}
 
@@ -38,13 +38,19 @@ BUILD_ARGS=(
   --exec-prefix=$LIBXML2_PREFIX
 )
 
-sh -c "./autogen.sh ${LIBXML_ARGS[@]}"
+sh -c "./autogen.sh"
 ${CONFIGURE} "${BUILD_ARGS[@]}"
-make install
+${MAKE} install
 
 # Apply change for ffmpeg requirement
 cd $LIBXML2_PREFIX
-sed -i 's@-I${includedir}/libxml2@& -I${includedir}@' lib/pkgconfig/libxml-2.0.pc
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS requires an argument after -i (even if it's an empty string)
+  sed -i '' 's@-I${includedir}/libxml2@& -I${includedir}@' lib/pkgconfig/libxml-2.0.pc
+else
+  # Linux/other systems
+  sed -i 's@-I${includedir}/libxml2@& -I${includedir}@' lib/pkgconfig/libxml-2.0.pc
+fi
 
 # teardown
 rm -Rf $LIBXML2_PREFIX/source

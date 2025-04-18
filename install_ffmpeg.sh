@@ -47,7 +47,12 @@ libs_only=0
 need_sudo=0
 
 # handle dynamic arguments
-VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix:,sudo: -- "$@")
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  VALID_ARGS=$(getopt -o h --l help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix:,sudo: -- "$@")
+else
+  VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix:,sudo: -- "$@")
+fi
+
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
@@ -219,12 +224,12 @@ fi
 
 echo "installing ffmpeg ${FFMPEG_VERSION}..."
 mkdir -p $FFMPEG_PREFIX/source && cd $FFMPEG_PREFIX/source
-wget https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz -O ffmpeg-${FFMPEG_VERSION}.tar.xz
+wget --continue https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz -O ffmpeg-${FFMPEG_VERSION}.tar.xz
 tar -xf ffmpeg-${FFMPEG_VERSION}.tar.xz
 cd ffmpeg-${FFMPEG_VERSION}
 
 ${CONFIGURE} "${CONFIG_ARGS[@]}"
-${MAKE} -j$(nproc)
+${MAKE}
 if [ $libs_only -eq 0 ]; then
   if [ $need_sudo -eq 1 ]; then
     # there should binary available that we store as sudo

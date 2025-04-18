@@ -48,17 +48,19 @@ if [ "$ARCH" != "$(uname -m)" ]; then
     BUILD_ARGS+=(
       -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
     )
-  fi  
+  fi
 fi
 
 echo "installing libaom ${AOM_VERSION} into ${AOM_PREFIX}..."
 mkdir -p $AOM_PREFIX/source && cd $AOM_PREFIX/source
-wget --no-check-certificate https://aomedia.googlesource.com/aom/+archive/v${AOM_VERSION}.tar.gz -O aom.tar.gz
+wget --continue  --no-check-certificate https://aomedia.googlesource.com/aom/+archive/v${AOM_VERSION}.tar.gz -O aom.tar.gz
 tar -xf aom.tar.gz
 mkdir -p build && cd build
 
+echo $CMAKE
+
 ${CMAKE} .. "${BUILD_ARGS[@]}"
-${MAKE} -j$(nproc)
+${MAKE}
 ${MAKE} install
 
 # teardown
