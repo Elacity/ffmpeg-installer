@@ -38,9 +38,9 @@ BUILD_ARGS=(
 )
 
 # When building for WebAssembly, specify a target platform that doesn't include macOS-specific flags
-if [ "$ARCH" == "wasm32" && "$OSTYPE" == "darwin"* ]; then
+if [[ "$ARCH" == "wasm32" && "$OSTYPE" == "darwin"* ]]; then
   BUILD_ARGS=(
-    linux-generic32
+    linux-x32
     "${BUILD_ARGS[@]}"
   )
 fi
@@ -56,7 +56,7 @@ if [ "$ARCH" != "$(uname -m)" ]; then
     
     # Remove macOS-specific flags when building with Emscripten on macOS
     if [ "$ARCH" == "wasm32" ]; then
-      sed -i '' 's/-arch arm64//g' Makefile
+      # sed -i '' 's/-arch arm64//g' Makefile
       sed -i '' 's/-search_paths_first//g' Makefile
     fi
   else

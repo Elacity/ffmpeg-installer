@@ -220,6 +220,8 @@ if [ $use_sudo -eq 1 ]; then
   )
 fi
 
+echo "Building ffmpeg version ${FFMPEG_VERSION} with options: ${FFMPEG_OPTS[@]}"
+
 $scriptdir/install_ffmpeg.sh $TARGET_BUILD $INSTALL_DIR/ffmpeg $FFMPEG_VERSION "${FFMPEG_OPTS[@]}"
 
 if [ $ffmpeg_libs_only -eq 0 ]; then

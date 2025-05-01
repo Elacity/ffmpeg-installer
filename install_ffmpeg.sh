@@ -24,7 +24,7 @@ CONFIG_ARGS=(
   --disable-manpages
   --disable-podpages
   --disable-txtpages
-  --disable-logging
+  #--disable-logging
   --disable-devices
   --disable-hwaccels
 
@@ -181,11 +181,39 @@ while [ : ]; do
   esac
 done
 
+# Check if both OpenSSL and libx264 (GPL) are enabled
+for arg in "${CONFIG_ARGS[@]}"; do
+  if [ "$arg" == "--enable-openssl" ]; then
+    has_openssl=1
+  fi
+  if [ "$arg" == "--enable-gpl" ]; then
+    has_gpl=1
+  fi
+done
+
+# If both OpenSSL and GPL are enabled, add --enable-nonfree to allow their combination
+if [ "${has_openssl:-0}" -eq 1 ] && [ "${has_gpl:-0}" -eq 1 ]; then
+  echo "Both OpenSSL and GPL-licensed components detected. Adding --enable-nonfree flag."
+  CONFIG_ARGS+=(
+    --enable-nonfree
+  )
+fi
+
 if [ "$ARCH" != "$(uname -m)" ]; then
   # target architecture is different from host architecture
   if [ "$ARCH" == "wasm32" ]; then
     export EMCC_FORCE_STDLIBS=1
     export EM_PKG_CONFIG_PATH=$PKG_PATH
+    export PKG_CONFIG_PATH=$PKG_PATH  # Also set the standard pkg-config path
+    
+    echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+    echo "EM_PKG_CONFIG_PATH: $EM_PKG_CONFIG_PATH"
+    
+    # Debug: Check if pkg-config can find OpenSSL
+    echo "Checking if pkg-config can find OpenSSL:"
+    pkg-config --modversion openssl || echo "pkg-config couldn't find openssl"
+    pkg-config --modversion libssl || echo "pkg-config couldn't find libssl"
+    
     CONFIGURE="emconfigure ./configure"
     MAKE="emmake make"
 
@@ -228,7 +256,18 @@ wget --continue https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz -O f
 tar -xf ffmpeg-${FFMPEG_VERSION}.tar.xz
 cd ffmpeg-${FFMPEG_VERSION}
 
+# Add debugging to see where FFmpeg is looking for libraries
+echo "Running FFmpeg configure with verbose output to debug OpenSSL detection..."
 ${CONFIGURE} "${CONFIG_ARGS[@]}"
+
+# If the above fails, try to find the config.log file which contains detailed information
+if [ $? -ne 0 ]; then
+  echo "Configure failed. Searching for config.log..."
+  find . -name "config.log" -exec cat {} \; | grep -i openssl
+  echo "Checking FFmpeg's configure script for OpenSSL detection logic..."
+  grep -n -A 5 -B 5 "openssl" ./configure
+  exit 1
+fi
 ${MAKE}
 if [ $libs_only -eq 0 ]; then
   if [ $need_sudo -eq 1 ]; then
