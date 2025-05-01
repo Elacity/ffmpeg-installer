@@ -19,7 +19,7 @@ echo "installing dav1d ${DAV1D_VERSION} for ${ARCH} into ${DAV1D_PREFIX}..."
 
 mkdir -p $DAV1D_PREFIX/source && cd $DAV1D_PREFIX/source
 rm -Rf dav1d dav1d-*
-wget --no-check-certificate https://code.videolan.org/videolan/dav1d/-/archive/${DAV1D_VERSION}/dav1d-${DAV1D_VERSION}.tar.gz -O dav1d.tar.gz
+wget --continue --no-check-certificate https://code.videolan.org/videolan/dav1d/-/archive/${DAV1D_VERSION}/dav1d-${DAV1D_VERSION}.tar.gz -O dav1d.tar.gz
 tar -xf dav1d.tar.gz
 cd dav1d-${DAV1D_VERSION}
 

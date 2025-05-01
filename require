@@ -51,7 +51,7 @@ skip_deps_install=0 # skip dependencies installation, go straight to ffmpeg
 
 # Use getopt in a way that is compatible with both macOS and Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
+  VALID_ARGS=$(getopt -o h -l help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
 else
   VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
 fi
@@ -219,6 +219,8 @@ if [ $use_sudo -eq 1 ]; then
     --sudo
   )
 fi
+
+echo "Building ffmpeg version ${FFMPEG_VERSION} with options: ${FFMPEG_OPTS[@]}"
 
 $scriptdir/install_ffmpeg.sh $TARGET_BUILD $INSTALL_DIR/ffmpeg $FFMPEG_VERSION "${FFMPEG_OPTS[@]}"
 

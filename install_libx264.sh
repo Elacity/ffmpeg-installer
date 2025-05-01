@@ -25,7 +25,7 @@ echo "installing x264 (master) for ${ARCH} into ${X264_PREFIX}..."
 
 mkdir -p $X264_PREFIX/source && cd $X264_PREFIX/source
 rm -Rf x264 x264-*
-wget --no-check-certificate https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz -O x264.tar.gz
+wget --continue --no-check-certificate https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz -O x264.tar.gz
 tar -xf x264.tar.gz
 cd x264-master
 
@@ -40,7 +40,7 @@ BUILD_ARGS=(
 )
 
 ${CONFIGURE} "${BUILD_ARGS[@]}" "${crosscompile[@]}"
-${MAKE} -j$(nproc)
+${MAKE}
 make install
 
 # teardown

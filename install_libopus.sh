@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -u
 
 ARCH=${1:-"$(uname -m)"}
 OPUS_PREFIX=${2:-/opt/lib/opus}
@@ -21,7 +20,7 @@ fi
 echo "installing libopus ${OPUS_PREFIX} for ${ARCH} into ${OPUS_VERSION}..."
 mkdir -p $OPUS_PREFIX/source && cd $OPUS_PREFIX/source
 rm -Rf opus opus-*
-wget --no-check-certificate "https://github.com/xiph/opus/releases/download/v${OPUS_VERSION}/opus-${OPUS_VERSION}.tar.gz" -O opus.tar.gz
+wget --continue --no-check-certificate "https://github.com/xiph/opus/releases/download/v${OPUS_VERSION}/opus-${OPUS_VERSION}.tar.gz" -O opus.tar.gz
 tar -xf opus.tar.gz
 cd opus-${OPUS_VERSION}
 
@@ -38,8 +37,15 @@ BUILD_ARGS=(
 	--disable-stack-protector
 )
 
-${CONFIGURE} "${BUILD_ARGS[@]}" "${crosscompile[@]}"
-${MAKE} -j$(nproc)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  BUILD_ARGS+=(
+	--disable-intrinsics
+	--disable-neon
+  )
+fi
+
+${CONFIGURE} "${BUILD_ARGS[@]}"
+${MAKE}
 make install
 
 # teardown
