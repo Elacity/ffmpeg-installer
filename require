@@ -51,9 +51,9 @@ skip_deps_install=0 # skip dependencies installation, go straight to ffmpeg
 
 # Use getopt in a way that is compatible with both macOS and Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
+  VALID_ARGS=$(getopt h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,enable-libvpx,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
 else
-  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
+  VALID_ARGS=$(getopt -o h --long help,maximum-memory:,platform:,installdir:,enable-libopus,enable-libdav1d,enable-libaom,enable-libx264,enable-libxml2,enable-openssl,enable-libvpx,ff-libs-only,ff-bindir:,ff-version:,skip-deps-install,sudo -- "$@")
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
@@ -107,6 +107,10 @@ while [ : ]; do
       ;;
     --enable-openssl)
       enable_openssl=1
+      shift 1
+      ;;
+    --enable-libvpx)
+      enable_libvpx=1
       shift 1
       ;;
     --ff-libs-only)
@@ -201,6 +205,17 @@ if [ $enable_openssl -eq 1 ]; then
   FFMPEG_OPTS+=(
     --enable-openssl
     --openssl-prefix=$INSTALL_DIR/openssl
+  )
+fi
+
+if [ $enable_libvpx -eq 1 ]; then
+  if [ $skip_deps_install -eq 0 ]; then
+    $scriptdir/install_libvpx.sh $TARGET_BUILD $INSTALL_DIR/vpx "v1.15.1"
+  fi
+
+  FFMPEG_OPTS+=(
+    --enable-libvpx
+    --libvpx-prefix=$INSTALL_DIR/vpx
   )
 fi
 

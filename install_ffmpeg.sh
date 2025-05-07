@@ -17,6 +17,8 @@ CONFIG_ARGS=(
   --enable-decoder=h264
   --enable-decoder=av1
   --enable-decoder=opus
+  --enable-decoder=vp8
+  --enable-decoder=vp9
   --pkg-config-flags="--static"
   --disable-stripping       # disable stripping
   --disable-doc             # disable doc
@@ -41,13 +43,13 @@ CONFIG_ARGS=(
 CONFIGURE="./configure"
 MAKE="make"
 
-export PKG_PATH="/usr/lib/pkgconfig"
+export PKG_PATH=""
 
 libs_only=0
 need_sudo=0
 
 # handle dynamic arguments
-VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix:,sudo: -- "$@")
+VALID_ARGS=$(getopt -o h --long help,bindir:,maximum-memory:,libs-only,enable-libopus,libopus-prefix:,enable-libdav1d,libdav1d-prefix:,enable-libaom,libaom-prefix:,enable-libx264,libx264-prefix:,enable-libxml2,libxml2-prefix:,enable-openssl,openssl-prefix:,enable-libvpx,libvpx-prefix:,sudo: -- "$@")
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
@@ -161,6 +163,20 @@ while [ : ]; do
       fi
       shift 2
       ;;
+    
+    --enable-libvpx)
+      CONFIG_ARGS+=(
+        --enable-libvpx
+        --enable-decoder=libvpx_vp8
+        --enable-decoder=libvpx_vp9
+      )
+      shift 1
+      ;;
+    --libvpx-prefix)
+      export PKG_PATH="$PKG_PATH:$2/lib/pkgconfig"
+      shift 2
+      ;;
+
     -h | --help)
       echo "usage: $0 <ffmpeg-options>, see https://ffmpeg.org/ffmpeg.html for more details"
       exit 0
