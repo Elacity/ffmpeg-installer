@@ -43,7 +43,7 @@ CONFIG_ARGS=(
 CONFIGURE="./configure"
 MAKE="make"
 
-export PKG_PATH=""
+export PKG_PATH="/usr/lib/pkgconfig"
 
 libs_only=0
 need_sudo=0
