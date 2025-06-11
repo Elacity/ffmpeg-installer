@@ -19,7 +19,7 @@ fi
 
 echo "installing libxml2..."
 mkdir -p $LIBXML2_PREFIX/source && cd $LIBXML2_PREFIX/source
-wget --continue "https://gitlab.gnome.org/GNOME/libxml2/-/archive/v${LIBXML2_VERSION}/libxml2-v${LIBXML2_VERSION}.tar.gz" -O libxml2-v${LIBXML2_VERSION}.tar.gz
+wget --continue --no-check-certificate "https://gitlab.gnome.org/GNOME/libxml2/-/archive/v${LIBXML2_VERSION}/libxml2-v${LIBXML2_VERSION}.tar.gz" -O libxml2-v${LIBXML2_VERSION}.tar.gz
 tar -xf libxml2-v${LIBXML2_VERSION}.tar.gz
 cd libxml2-v${LIBXML2_VERSION}
 
